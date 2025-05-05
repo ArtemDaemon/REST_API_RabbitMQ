@@ -8,6 +8,7 @@ import (
 	"os"
 	"rest-api/handlers"
 	"rest-api/middleware"
+	"rest-api/mq"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
@@ -40,6 +41,12 @@ func main() {
 	}
 	defer db.Close()
 
+	mqManager, err := mq.NewMQManager("amqp://guest:guest@localhost:5672/", "new_items")
+	if err != nil {
+		log.Fatalf("Ошибка при подключении к RabbitMQ: %v", err)
+	}
+	defer mqManager.Close()
+
 	r := chi.NewRouter()
 
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
@@ -50,7 +57,7 @@ func main() {
 		r.Get("/count", handlers.CountItemsHandler(db))
 		r.Get("/last_created_at", handlers.LastCreatedAtHandler(db))
 		r.Get("/get_item", handlers.GetItemByDateHandler(db))
-		r.Post("/add_item", handlers.AddItemHandler(db))
+		r.Post("/add_item", handlers.AddItemHandler(db, mqManager))
 	})
 
 	fmt.Println("Сервер запущен на порту 8080")

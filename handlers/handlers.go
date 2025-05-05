@@ -3,7 +3,9 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
+	"rest-api/mq"
 
 	_ "modernc.org/sqlite"
 )
@@ -119,7 +121,7 @@ func GetItemByDateHandler(db *sql.DB) http.HandlerFunc {
 // @Failure 500 {string} string "Ошибка при добавлении записи"
 // @Security ApiKeyAuth
 // @Router /api/add_item [post]
-func AddItemHandler(db *sql.DB) http.HandlerFunc {
+func AddItemHandler(db *sql.DB, mq *mq.MQManager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var item Item
 		err := json.NewDecoder(r.Body).Decode(&item)
@@ -143,6 +145,15 @@ func AddItemHandler(db *sql.DB) http.HandlerFunc {
 		if err != nil {
 			http.Error(w, "Ошибка при добавлении записи: "+err.Error(), http.StatusInternalServerError)
 			return
+		}
+
+		msgBytes, err := json.Marshal(item)
+		if err == nil {
+			if pubErr := mq.Publish(string(msgBytes)); pubErr != nil {
+				log.Printf("Ошибка при публикации в RabbitMQ: %v", pubErr)
+			}
+		} else {
+			log.Printf("Ошибка при сериализации item: %v", err)
 		}
 
 		w.WriteHeader(http.StatusCreated)
