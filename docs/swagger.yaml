@@ -1,0 +1,147 @@
+definitions:
+  handlers.Item:
+    properties:
+      country_id:
+        type: string
+      country_iso3_code:
+        type: string
+      country_value:
+        type: string
+      created_at:
+        type: string
+      date:
+        type: string
+      decimal:
+        type: integer
+      indicator_id:
+        type: string
+      indicator_value:
+        type: string
+      obs_status:
+        type: string
+      unit:
+        type: string
+      value:
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: Это REST API с авторизацией через Bearer-токен
+  title: Пример REST API
+  version: "1.0"
+paths:
+  /api/add_item:
+    post:
+      consumes:
+      - application/json
+      description: Принимает JSON-структуру и добавляет её в базу
+      parameters:
+      - description: Элемент данных
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.Item'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Неверный JSON
+          schema:
+            type: string
+        "500":
+          description: Ошибка при добавлении записи
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Добавить элемент
+      tags:
+      - items
+  /api/count:
+    get:
+      description: Возвращает общее число записей в базе данных
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "500":
+          description: Ошибка при запросе количества
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Получить количество элементов
+      tags:
+      - items
+  /api/get_item:
+    get:
+      description: Возвращает первую запись с указанной датой
+      parameters:
+      - description: Год (например, 2022)
+        in: query
+        name: year
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Item'
+        "400":
+          description: Параметр 'year' обязателен
+          schema:
+            type: string
+        "404":
+          description: Элемент не найден
+          schema:
+            type: string
+        "500":
+          description: Ошибка при запросе
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Получить элемент по дате
+      tags:
+      - items
+  /api/last_created_at:
+    get:
+      description: Возвращает максимальное значение поля created_at
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Ошибка при получении даты
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Получить дату последнего элемента
+      tags:
+      - items
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Aithorization
+    type: apiKey
+swagger: "2.0"
