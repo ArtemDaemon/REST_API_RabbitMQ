@@ -7,7 +7,6 @@ import (
 type MQManager struct {
 	conn    *amqp091.Connection
 	channel *amqp091.Channel
-	queue   amqp091.Queue
 }
 
 func NewMQManager(url, queueName string) (*MQManager, error) {
@@ -21,13 +20,14 @@ func NewMQManager(url, queueName string) (*MQManager, error) {
 		return nil, err
 	}
 
-	q, err := ch.QueueDeclare(
-		queueName,
-		true,  // durable
-		false, //auto-delete
-		false, //exclusive
-		false, // no-wait
-		nil,   // arguments
+	err = ch.ExchangeDeclare(
+		"broadcast", // имя exchange
+		"fanout",    // тип
+		true,        // durable
+		false,       // auto-delete
+		false,       // exclusive
+		false,       // no-wait
+		nil,         // arguments
 	)
 	if err != nil {
 		return nil, err
@@ -36,16 +36,15 @@ func NewMQManager(url, queueName string) (*MQManager, error) {
 	return &MQManager{
 		conn:    conn,
 		channel: ch,
-		queue:   q,
 	}, nil
 }
 
 func (m *MQManager) Publish(message string) error {
 	return m.channel.Publish(
-		"",           // exchange
-		m.queue.Name, // routing key
-		false,        // mandatory
-		false,        // immediate
+		"broadcast", // exchange
+		"",          // routing key
+		false,       // mandatory
+		false,       // immediate
 		amqp091.Publishing{
 			ContentType: "text/plain",
 			Body:        []byte(message),
