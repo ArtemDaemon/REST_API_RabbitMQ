@@ -160,3 +160,30 @@ func AddItemHandler(db *sql.DB, mq *mq.MQManager) http.HandlerFunc {
 		json.NewEncoder(w).Encode(map[string]string{"message": "Элемент добавлен"})
 	}
 }
+
+func GetLastItemHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := `
+			SELECT indicator_id, indicator_value, country_id, 
+				country_value, country_iso3_code, date, 
+				value, unit, obs_status, 
+				decimal, created_at 
+			FROM items
+			ORDER BY created_at DESC
+			LIMIT 1
+		`
+
+		var item Item
+		err := db.QueryRow(query).Scan(
+			&item.IndicatorId, &item.IndicatorValue, &item.CountryId, &item.CountryValue,
+			&item.CountryISO3Code, &item.Date, &item.Value, &item.Unit,
+			&item.ObsStatus, &item.Decimal, &item.CreatedAt,
+		)
+		if err != nil {
+			http.Error(w, "Не удалось получить запись: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		json.NewEncoder(w).Encode(item)
+	}
+}

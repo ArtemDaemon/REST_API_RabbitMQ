@@ -58,6 +58,7 @@ func main() {
 		r.Get("/last_created_at", handlers.LastCreatedAtHandler(db))
 		r.Get("/get_item", handlers.GetItemByDateHandler(db))
 		r.Post("/add_item", handlers.AddItemHandler(db, mqManager))
+		r.Get("/last_item", handlers.GetLastItemHandler(db))
 	})
 
 	fmt.Println("Сервер запущен на порту 8080")
